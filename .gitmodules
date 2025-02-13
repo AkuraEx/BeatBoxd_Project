@@ -1,0 +1,3 @@
+[submodule "BeatBoxdApp"]
+	path = BeatBoxdApp
+	url = https://github.com/AkuraEx/BeatBoxdApp.git
