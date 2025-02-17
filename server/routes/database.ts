@@ -1,4 +1,4 @@
-import mysql, { ResultSetHeader } from 'mysql2'
+import mysql, { RowDataPacket, ResultSetHeader } from 'mysql2'
 import dotenv from "dotenv"
 
 dotenv.config()
@@ -10,8 +10,9 @@ const pool = mysql.createPool({
     database: process.env.MYSQL_DATABASE 
 }).promise()
 
+
 export async function getNotes() {
-    const [rows] = await pool.query("SELECT * FROM notes")
+    const [rows] = await pool.query("SELECT id FROM notes")
     return rows
 }
 

@@ -9,19 +9,10 @@ const app = express()
 app.use(cors());
 app.use(express.json())
 
+// Multiple Notes
 app.get("/notes", async (req, res)=> {
     const notes = await getNotes()
     res.json({message: notes})
-})
-
-app.get("/not", async (req, res)=> {
-    res.json({ message: "Fuck you"});
-})
-
-app.get("/notes/:id", async (req, res)=> {
-    const id = req.params.id
-    const note = await getNote(id)
-    res.send(note)
 })
 
 app.post("/notes", async (req, res) => {
@@ -29,6 +20,20 @@ app.post("/notes", async (req, res) => {
     const note = await createNote(title, contents)
     res.status(201).send(note)
 })
+// Single Note
+app.get("/note", async (req, res)=> {
+    const { id } = req.body
+    const note = await getNote(id)
+    res.json({note})
+})
+
+app.post("/note", async (req, res) => {
+    const { id } = req.body
+    const note = await getNote(id)
+    res.status (201).send(note)
+})
+
+
 
 app.use((err, req, res, next) => {
     console.error(err.stack)
@@ -36,5 +41,5 @@ app.use((err, req, res, next) => {
 })
 
 app.listen(PORT, () => {
-    console.log('Server is running on port ${PORT}')
+    console.log('Server is running on port 8080')
 })
