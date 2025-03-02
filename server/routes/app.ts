@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 
-import { getNote, getNotes, createNote } from './database.ts'
+import { getAlbum, getAlbums } from './database.ts'
 
 const PORT = 8080 
 const app = express()
@@ -9,30 +9,40 @@ const app = express()
 app.use(cors());
 app.use(express.json())
 
-// Multiple Notes
-app.get("/notes", async (req, res)=> {
-    const notes = await getNotes()
-    res.json({message: notes})
+// Multiple Albums
+app.get("/albums", async (req, res)=> {
+    const titles = await getAlbums()
+    res.json({message: titles})
 })
 
-app.post("/notes", async (req, res) => {
-    const { title, contents } = req.body
-    const note = await createNote(title, contents)
-    res.status(201).send(note)
-})
-// Single Note
-app.get("/note", async (req, res)=> {
-    const { id } = req.body
-    const note = await getNote(id)
-    res.json({note})
-})
 
-app.post("/note", async (req, res) => {
-    const { id } = req.body
-    const note = await getNote(id)
-    res.status (201).send(note)
-})
+// Single Album
 
+app.get("/album", async (req, res) => {
+    const { slug } = req.query;
+    console.log('Received slug:', slug);
+    
+    if (!slug) {
+        return res.status(400).json({ error: "Slug is required" });
+    }
+
+    const album = await getAlbum(slug as string);
+
+    if (!album) {
+        return res.status(404).json({ error: "Album not found" });
+    }
+
+    return res.json({ album });
+});
+
+
+/*
+app.post("/album", async (req, res) => {
+    const { slug } = req.body
+    const album = await getAlbum(slug)
+    res.status (201).send(album)
+})
+*/
 
 
 app.use((err, req, res, next) => {

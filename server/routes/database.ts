@@ -11,19 +11,20 @@ const pool = mysql.createPool({
 }).promise()
 
 
-export async function getNotes() {
-    const [rows] = await pool.query("SELECT id FROM notes")
+export async function getAlbums() {
+    const [rows] = await pool.query("SELECT * FROM ALBUM")
     return rows
 }
 
-export async function getNote(id) {
+export async function getAlbum(slug) {
     const [rows] = await pool.query(`
-        SELECT * FROM notes
-        WHERE id = ?
-        `, [id])
-        return rows[0]
+        SELECT * FROM ALBUM
+        WHERE slug = ?
+        `, [slug]);
+        return rows[0];
 }
 
+/*
 export async function createNote(title, contents) {
     const [result] = await pool.query<ResultSetHeader>(`
         INSERT INTO notes (title, contents)
@@ -32,4 +33,5 @@ export async function createNote(title, contents) {
         const id = result.insertId
         return getNote(id)
 }
+        */
 
