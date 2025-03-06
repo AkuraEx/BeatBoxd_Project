@@ -13,7 +13,16 @@ const pool = mysql.createPool({
 
 export async function getAlbums() {
     const [rows] = await pool.query("SELECT * FROM ALBUM")
-    return rows
+    return rows;
+}
+
+export async function getReviews(AlId) {
+    const [reviews] = await pool.query(`
+        SELECT * FROM REVIEW
+        WHERE AlId = ?
+        ORDER BY RvId DESC
+        `, [AlId]);
+    return reviews;
 }
 
 export async function getAlbum(slug) {
@@ -22,6 +31,23 @@ export async function getAlbum(slug) {
         WHERE slug = ?
         `, [slug]);
         return rows[0];
+}
+
+export async function getArtist(AId) {
+    const [rows] = await pool.query(`
+        SELECT * FROM ARTIST
+        WHERE AId = ?
+        `, [AId]);
+        return rows[0];
+}
+
+export async function createReview(AlId, Body, Rate) {
+    const [result] = await pool.query<ResultSetHeader>(`
+        INSERT INTO Review (AlId, Body, Rate)  
+        VALUES (?, ?, ?)
+        `, [AlId, Body, Rate]);
+        const Id = result.insertId;
+        return getReviews(Id);
 }
 
 /*
