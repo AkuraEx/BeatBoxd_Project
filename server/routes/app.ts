@@ -1,10 +1,13 @@
 import express from 'express'
 import cors from 'cors'
+import bcrypt from 'bcrypt'
+import jwt from "jsonwebtoken";
 
-import { getAlbum, getAlbums, getArtist, getReviews, createReview } from './database.ts'
+import { getAlbum, getAlbums, getArtist, getReviews, createReview, createUser, authenticateUser } from './database.ts'
 
 const PORT = 8080 
 const app = express()
+const secretKey = process.env.SECRET_KEY
 
 app.use(cors());
 app.use(express.json())
@@ -61,6 +64,31 @@ app.get("/artist", async (req, res) => {
     return res.json({ artist });
 })
 
+app.post("/user/login", async (req, res) => {
+    const { Username, Password } = req.body;
+    console.log("askdfjakl", Username, Password)
+    try {
+
+        const user = await authenticateUser(Username);
+
+        if(!user) {
+            return res.status(400).json({ error: "User not found "});
+        }
+
+        const passwordMatch = await bcrypt.compare(Password, user.Password);
+        if(!passwordMatch) {
+            return res.status(400).json({ error: "Incorrect Password "});
+        }
+
+        const token = jwt.sign({ userId: user.UId, username: user.Username}, secretKey, { expiresIn: "2h"});
+
+        res.json({ message: "Login Successful", token});
+    } catch (error) {
+        console.error(" Error logging in:", error);
+        res.status(500).json({ error: "Internal server error "});
+    }
+})
+
 
 /*
 app.post("/album", async (req, res) => {
@@ -76,6 +104,12 @@ app.post("/review", async (req, res) => {
     res.status(201).send(review);
 })
 
+
+app.post("/user/signup", async (req, res) => {
+    const { Username, Email, Password } = req.body;
+    const user = await createUser( Username, Email, Password );
+    res.status(201).send(user);
+})
 
 app.use((err, req, res, next) => {
     console.error(err.stack)

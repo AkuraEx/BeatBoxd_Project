@@ -1,5 +1,6 @@
 import mysql, { RowDataPacket, ResultSetHeader } from 'mysql2'
 import dotenv from "dotenv"
+import bcrypt from "bcrypt";
 
 dotenv.config()
 
@@ -49,6 +50,33 @@ export async function createReview(AlId, Body, Rate) {
         const Id = result.insertId;
         return getReviews(Id);
 }
+
+export async function createUser(Username, Email, Password) {
+    const hashedPassword = await bcrypt.hash(Password, 10)
+    const [result] = await pool.query<ResultSetHeader>(`
+        INSERT INTO User (Username, Email, Password)
+        VALUES (?, ?, ?) 
+        `, [Username, Email, hashedPassword]);
+        const Id = result.insertId;
+        return getUser(Id);
+} 
+
+export async function getUser(UId) {
+    const [result] = await pool.query(`
+       SELECT * FROM User
+       WHERE UId = ?     
+      `, [UId]);
+        return result[0];
+}
+
+export async function authenticateUser(Username) {
+        const [rows] = await pool.query(`
+            SELECT * FROM User
+            WHERE Username = ? 
+            `, [Username]);
+            return rows[0];
+}
+
 
 /*
 export async function createNote(title, contents) {
