@@ -17,6 +17,11 @@ export async function getAlbums() {
     return rows;
 }
 
+export async function getArtists() {
+    const [rows] = await pool.query("SELECT * FROM ARTIST")
+    return rows;
+}
+
 export async function getReviews(AlId) {
     const [reviews] = await pool.query(`
         SELECT * FROM REVIEW

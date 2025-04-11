@@ -1,12 +1,15 @@
 import express from 'express'
 import cors from 'cors'
+import dotenv from "dotenv"
 import bcrypt from 'bcrypt'
-import jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken"
+import cookieParser from "cookie-parser"
 
-import { getAlbum, getAlbums, getArtist, getReviews, createReview, createUser, authenticateUser } from './database.ts'
+import { getAlbum, getAlbums, getArtist, getArtists, getReviews, createReview, createUser, authenticateUser } from './database.ts'
 
 const PORT = 8080 
 const app = express()
+app.use(cookieParser());
 const secretKey = process.env.SECRET_KEY
 
 app.use(cors());
@@ -27,6 +30,10 @@ app.get("/reviews", async (req, res)=> {
 })
 
 
+app.get("/artists", async (req, res)=> {
+    const artists = await getArtists()
+    res.json({message: artists})
+})
 // Single Album
 
 app.get("/album", async (req, res) => {
@@ -66,14 +73,8 @@ app.get("/artist", async (req, res) => {
 
 app.post("/user/login", async (req, res) => {
     const { Username, Password } = req.body;
-    console.log("askdfjakl", Username, Password)
-    try {
-
-        const user = await authenticateUser(Username);
-
-        if(!user) {
-            return res.status(400).json({ error: "User not found "});
-        }
+    const user = await authenticateUser(Username);
+    if(user) {
 
         const passwordMatch = await bcrypt.compare(Password, user.Password);
         if(!passwordMatch) {
@@ -82,12 +83,33 @@ app.post("/user/login", async (req, res) => {
 
         const token = jwt.sign({ userId: user.UId, username: user.Username}, secretKey, { expiresIn: "2h"});
 
-        res.json({ message: "Login Successful", token});
-    } catch (error) {
-        console.error(" Error logging in:", error);
-        res.status(500).json({ error: "Internal server error "});
+        res.json({ auth: true, token: token});
+
+    } else {
+        res.json({ auth: false, message: "No such user exists "});
     }
-})
+});
+
+
+
+
+const authenticateToken = (req, res, next) => {
+    const token = req.headers["x-access-token"];
+
+    if (!token) {
+        res.status(401).json({ auth: false, message: "Token required "});
+    }
+
+    jwt.verify(token, secretKey, (err, decoded) => {
+
+    if (err) {
+        res.json({ auth: false, message: "U failed to auth"});
+    } else {
+    req.user = decoded;
+    next();
+    }
+    });
+};
 
 
 /*
@@ -109,6 +131,10 @@ app.post("/user/signup", async (req, res) => {
     const { Username, Email, Password } = req.body;
     const user = await createUser( Username, Email, Password );
     res.status(201).send(user);
+})
+
+app.get("/user/session", authenticateToken, async (req, res) => {
+    res.send({message: "Yo, u are authenticated", user: req.user});
 })
 
 app.use((err, req, res, next) => {
