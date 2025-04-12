@@ -17,6 +17,15 @@ export async function getAlbums() {
     return rows;
 }
 
+export async function getArtistsAlbums(AId) {
+    const [rows] = await pool.query(`
+        SELECT * FROM ALBUM
+        WHERE AId = ?
+        ORDER BY Title DESC
+        `, [AId])
+    return rows;
+}
+
 export async function getArtists() {
     const [rows] = await pool.query("SELECT * FROM ARTIST")
     return rows;
@@ -39,11 +48,17 @@ export async function getAlbum(slug) {
         return rows[0];
 }
 
-export async function getArtist(AId) {
+export async function getArtist(field, value) {
+    const allowedFields = ['AId', 'slug']
+    if (!allowedFields.includes(field)) {
+        throw new Error('Invalid field name');
+    }
+
     const [rows] = await pool.query(`
         SELECT * FROM ARTIST
-        WHERE AId = ?
-        `, [AId]);
+        WHERE ${field} = ?
+        `, [value]);
+
         return rows[0];
 }
 

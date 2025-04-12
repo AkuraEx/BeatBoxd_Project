@@ -5,7 +5,7 @@ import bcrypt from 'bcrypt'
 import jwt from "jsonwebtoken"
 import cookieParser from "cookie-parser"
 
-import { getAlbum, getAlbums, getArtist, getArtists, getReviews, createReview, createUser, authenticateUser } from './database.ts'
+import { getAlbum, getAlbums, getArtist, getArtists, getReviews, createReview, createUser, authenticateUser, getArtistsAlbums } from './database.ts'
 
 const PORT = 8080 
 const app = express()
@@ -34,6 +34,13 @@ app.get("/artists", async (req, res)=> {
     const artists = await getArtists()
     res.json({message: artists})
 })
+
+app.get("/artists/albums", async (req, res) => {
+    const { AId } = req.query;
+    console.log('Received AId:', AId);
+    const albums = await getArtistsAlbums(AId);
+    res.json({message: albums });
+})
 // Single Album
 
 app.get("/album", async (req, res) => {
@@ -55,14 +62,14 @@ app.get("/album", async (req, res) => {
 
 
 app.get("/artist", async (req, res) => {
-    const { AId } = req.query;
-    console.log('Received Artist Id:', AId);
-    
-    if (!AId) {
+    const { value, field } = req.query;
+    console.log('Received Artist Id:', value);
+    console.log(field)
+    if (!value) {
         return res.status(400).json({ error: "Artist is required" });
     }
 
-    const artist = await getArtist(AId);
+    const artist = await getArtist(field,value);
 
     if (!artist) {
         return res.status(404).json({ error: "Artist not found" });
