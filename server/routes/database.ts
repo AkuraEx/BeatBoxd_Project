@@ -89,6 +89,14 @@ export async function getUser(UId) {
         return result[0];
 }
 
+export async function findUser(Username) {
+    const [result] = await pool.query(`
+        SELECT * FROM User
+        WHERE Username = ?
+        `, [Username]);
+          return result;
+}
+
 export async function authenticateUser(Username) {
         const [rows] = await pool.query(`
             SELECT * FROM User
