@@ -40,11 +40,17 @@ export async function getReviews(AlId) {
     return reviews;
 }
 
-export async function getAlbum(slug) {
+export async function getAlbum(field, value) {
+    const allowedFields = ['slug', 'ALId']
+    if (!allowedFields.includes(field)) {
+        throw new Error('Invalid field name');
+    }
+
+
     const [rows] = await pool.query(`
         SELECT * FROM ALBUM
-        WHERE slug = ?
-        `, [slug]);
+        WHERE ${field} = ?
+        `, [value]);
         return rows[0];
 }
 
@@ -86,7 +92,7 @@ export async function createAlbum(AId, ALId, Title, Body, IMG_URL, slug) {
         INSERT INTO Album (AId, ALId, Title, Body, IMG_URL, slug)
         VALUES (?, ?, ?, ?, ?, ?)
         `, [AId, ALId, Title, Body, IMG_URL, slug]);
-        return getAlbum(slug); 
+        return getAlbum("slug", slug); 
 }
 
 export async function createArtist(AId, Artist_Name, Body, IMG_URL, slug) {
@@ -95,6 +101,22 @@ export async function createArtist(AId, Artist_Name, Body, IMG_URL, slug) {
         VALUES (?, ?, ?, ?, ?)
         `, [AId, Artist_Name, Body, IMG_URL, slug]);
         return getArtist("slug", slug); 
+}
+
+export async function createSavedAlbum(UId, AlId) {
+    const [result] = await pool.query<ResultSetHeader>(`
+        INSERT INTO SAVED_ALBUM (UId, AlId)
+        VALUES (?, ?)
+        `, [UId, AlId]);
+        return result[0];
+}
+
+export async function findSavedAlbums(UId) {
+    const [ result ] = await pool.query<ResultSetHeader>(`
+        SELECT * FROM ALBUM 
+        WHERE AlId = any (SELECT AlID FROM SAVED_ALBUM WHERE UId = ?)
+        `, [UId]);
+         return result
 }
 
 export async function getUser(UId) {

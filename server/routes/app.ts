@@ -5,7 +5,8 @@ import bcrypt from 'bcrypt'
 import jwt from "jsonwebtoken"
 import cookieParser from "cookie-parser"
 
-import { getAlbum, getAlbums, createAlbum, getArtist, getArtists, createArtist, getReviews, createReview, createUser, findUser, authenticateUser, getArtistsAlbums } from './database.ts'
+import { getAlbum, getAlbums, createAlbum, getArtist, getArtists, createArtist, getReviews, findSavedAlbums, 
+    createReview, createUser, findUser, authenticateUser, createSavedAlbum, getArtistsAlbums } from './database.ts'
 
 const PORT = 8080 
 const app = express()
@@ -44,14 +45,13 @@ app.get("/artists/albums", async (req, res) => {
 // Single Album
 
 app.get("/album", async (req, res) => {
-    const { slug } = req.query;
-    console.log('Received slug:', slug);
+    const { field, value } = req.query;
     
-    if (!slug) {
+    if (!value) {
         return res.status(400).json({ error: "Slug is required" });
     }
 
-    const album = await getAlbum(slug as string);
+    const album = await getAlbum(field, value);
 
     if (!album) {
         return res.status(404).json({ error: "Album not found" });
@@ -60,11 +60,16 @@ app.get("/album", async (req, res) => {
     return res.json({ album });
 });
 
+app.get("/user/album", async (req, res) => {
+    const { UId } = req.query;
+    console.log("received", UId);
+    const albums = await findSavedAlbums( UId );
+    res.json({message: albums});
+})
+
 
 app.get("/artist", async (req, res) => {
     const { value, field } = req.query;
-    console.log('Received Artist Id:', value);
-    console.log(field)
     if (!value) {
         return res.status(400).json({ error: "Artist is required" });
     }
@@ -161,6 +166,13 @@ app.post("/user/signup", async (req, res) => {
 app.get("/user/session", authenticateToken, async (req, res) => {
     res.send({message: "Yo, u are authenticated", user: req.user, auth: true});
 })
+
+app.post("/album/save", async (req, res) => {
+    const { UId, AlId } = req.body;
+    const save = await createSavedAlbum( UId, AlId );
+    res.status(201).send(save);
+})
+
 
 app.use((err, req, res, next) => {
     console.error(err.stack)
