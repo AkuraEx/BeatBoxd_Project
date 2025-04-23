@@ -5,7 +5,7 @@ import bcrypt from 'bcrypt'
 import jwt from "jsonwebtoken"
 import cookieParser from "cookie-parser"
 
-import { getAlbum, getAlbums, getArtist, getArtists, getReviews, createReview, createUser, findUser, authenticateUser, getArtistsAlbums } from './database.ts'
+import { getAlbum, getAlbums, createAlbum, getArtist, getArtists, createArtist, getReviews, createReview, createUser, findUser, authenticateUser, getArtistsAlbums } from './database.ts'
 
 const PORT = 8080 
 const app = express()
@@ -131,6 +131,18 @@ app.post("/review", async (req, res) => {
     const { AlId, Body, Rate } = req.body;
     const review = await createReview( AlId, Body, Rate );
     res.status(201).send(review);
+})
+
+app.post("/album/create", async (req, res) => {
+    const { AId, ALId, Title, Body, IMG_URL, slug} = req.body;
+    const album = await createAlbum( AId, ALId, Title, Body, IMG_URL, slug);
+    res.status(201).send(album);
+})
+
+app.post("/artist/create", async (req, res) => {
+    const { AId, Artist_Name, Body, IMG_URL, slug } = req.body;
+    const artist = await createArtist(AId, Artist_Name, Body, IMG_URL, slug);
+    res.status(201).send(artist);
 })
 
 app.get("/user/find", async (req, res) => {

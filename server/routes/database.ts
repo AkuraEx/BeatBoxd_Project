@@ -49,7 +49,7 @@ export async function getAlbum(slug) {
 }
 
 export async function getArtist(field, value) {
-    const allowedFields = ['AId', 'slug']
+    const allowedFields = ['AId', 'slug', 'Artist_Name']
     if (!allowedFields.includes(field)) {
         throw new Error('Invalid field name');
     }
@@ -80,6 +80,22 @@ export async function createUser(Username, Email, Password) {
         const Id = result.insertId;
         return getUser(Id);
 } 
+
+export async function createAlbum(AId, ALId, Title, Body, IMG_URL, slug) {
+    const [result] = await pool.query<ResultSetHeader>(`
+        INSERT INTO Album (AId, ALId, Title, Body, IMG_URL, slug)
+        VALUES (?, ?, ?, ?, ?, ?)
+        `, [AId, ALId, Title, Body, IMG_URL, slug]);
+        return getAlbum(slug); 
+}
+
+export async function createArtist(AId, Artist_Name, Body, IMG_URL, slug) {
+    const [result] = await pool.query<ResultSetHeader>(`
+        INSERT INTO Artist (AId, Artist_Name, Body, IMG_URL, slug)
+        VALUES (?, ?, ?, ?, ?)
+        `, [AId, Artist_Name, Body, IMG_URL, slug]);
+        return getArtist("slug", slug); 
+}
 
 export async function getUser(UId) {
     const [result] = await pool.query(`
