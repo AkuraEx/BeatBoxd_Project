@@ -6,7 +6,8 @@ import jwt from "jsonwebtoken"
 import cookieParser from "cookie-parser"
 
 import { getAlbum, getAlbums, createAlbum, getArtist, getArtists, createArtist, getReviews, findSavedAlbums, 
-    createReview, createUser, findUser, authenticateUser, createSavedAlbum, getArtistsAlbums } from './database.ts'
+    createReview, createUser, findUser, authenticateUser, createSavedAlbum, getArtistsAlbums,
+     findFollowing, followUser, fetchFriendsAlbums, fetchFriendsReviews, searchArtists, searchAlbums} from './database.ts'
 
 const PORT = 8080 
 const app = express()
@@ -62,11 +63,41 @@ app.get("/album", async (req, res) => {
 
 app.get("/user/album", async (req, res) => {
     const { UId } = req.query;
-    console.log("received", UId);
     const albums = await findSavedAlbums( UId );
     res.json({message: albums});
 })
 
+app.get("/follow/following", async (req, res) => {
+    const { UId } = req.query;
+    const following = await findFollowing( UId );
+    res.json({message: following});
+})
+
+app.get("/albums/friends", async (req, res) => {
+    const { UId } = req.query;
+    const albums = await fetchFriendsAlbums( UId );
+    res.json({albums});
+})
+
+app.get("/review/friends", async (req, res) => {
+    const { UId } = req.query;
+    const reviews = await fetchFriendsReviews( UId );
+    res.json({reviews});
+})
+
+app.get("/search/artist", async (req, res) => {
+    const { query } = req.query;
+    console.log(query);
+    const artists = await searchArtists( query ); 
+    res.json({ artists })
+})
+
+app.get("/search/album", async (req, res) => {
+    const { query } = req.query;
+    console.log(query);
+    const albums = await searchAlbums( query ); 
+    res.json({ albums })
+})
 
 app.get("/artist", async (req, res) => {
     const { value, field } = req.query;
@@ -133,9 +164,15 @@ app.post("/album", async (req, res) => {
 */
 
 app.post("/review", async (req, res) => {
-    const { AlId, Body, Rate } = req.body;
-    const review = await createReview( AlId, Body, Rate );
+    const { UId, Username, AlId, Body, Rate } = req.body;
+    const review = await createReview( UId, Username, AlId, Body, Rate );
     res.status(201).send(review);
+})
+
+app.post("/follow/user", async (req, res) => {
+    const { Follower_Id, Followee_Id } = req.body;
+    const follow = await followUser( Follower_Id, Followee_Id );
+    res.status(201).send(follow);
 })
 
 app.post("/album/create", async (req, res) => {

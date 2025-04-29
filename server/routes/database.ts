@@ -13,9 +13,55 @@ const pool = mysql.createPool({
 
 
 export async function getAlbums() {
-    const [rows] = await pool.query("SELECT * FROM ALBUM")
+    const [rows] = await pool.query("SELECT * FROM ALBUM ORDER BY Title ASC")
     return rows;
 }
+
+export async function fetchFriendsAlbums(UId) {
+    const [rows] = await pool.query(`SELECT 
+    ALBUM.AlId, ALBUM.Title, ALBUM.slug, ALBUM.IMG_URL, USER.Username
+    AS Saved_By, MAX(SAVED_ALBUM.Created_On) AS Created_On FROM FOLLOW
+    JOIN SAVED_ALBUM ON FOLLOW.Followee_Id = SAVED_ALBUM.UId
+    JOIN ALBUM ON SAVED_ALBUM.AlId = ALBUM.AlId
+    JOIN USER ON SAVED_ALBUM.UId = USER.UId
+    WHERE FOLLOW.Follower_Id = ?
+    GROUP BY ALBUM.AlId, USER.UId, ALBUM.Title, USER.Username
+    ORDER BY Created_On DESC
+    LIMIT 10`, [UId])
+    return rows;
+}
+
+export async function fetchFriendsReviews(UId) {
+    const [rows] = await pool.query(`SELECT 
+    ALBUM.AlId, ALBUM.Title, ALBUM.slug, ALBUM.IMG_URL,
+    USER.Username, REVIEW.RvId, REVIEW.Body, REVIEW.Rate,
+    MAX(REVIEW.Created_On) AS Created_On FROM FOLLOW
+    JOIN REVIEW ON FOLLOW.Followee_Id = REVIEW.UId
+    JOIN ALBUM ON REVIEW.AlId = ALBUM.AlId
+    JOIN USER ON REVIEW.UId = USER.UId
+    WHERE FOLLOW.Follower_Id = ?
+    GROUP BY ALBUM.AlId, ALBUM.Title, ALBUM.slug, ALBUM.IMG_URL, USER.UId, USER.Username, REVIEW.RvId, REVIEW.Body, REVIEW.Rate
+    ORDER BY Created_On DESC
+    LIMIT 5`, [UId])
+    return rows;
+}
+
+export async function searchArtists(query) {
+    const likeQuery = `${query}%`
+    const [rows] = await pool.query(`
+        SELECT * FROM ARTIST WHERE
+        Artist_Name like ?`, [likeQuery])
+        return rows;
+}
+
+export async function searchAlbums(query) {
+    const likeQuery = `${query}%`
+    const [rows] = await pool.query(`
+        SELECT * FROM ALBUM WHERE
+        Title like ?`, [likeQuery])
+        return rows;
+}
+
 
 export async function getArtistsAlbums(AId) {
     const [rows] = await pool.query(`
@@ -27,7 +73,7 @@ export async function getArtistsAlbums(AId) {
 }
 
 export async function getArtists() {
-    const [rows] = await pool.query("SELECT * FROM ARTIST")
+    const [rows] = await pool.query("SELECT * FROM ARTIST ORDER BY Artist_Name ASC")
     return rows;
 }
 
@@ -68,11 +114,11 @@ export async function getArtist(field, value) {
         return rows[0];
 }
 
-export async function createReview(AlId, Body, Rate) {
+export async function createReview(UId, Username, AlId, Body, Rate) {
     const [result] = await pool.query<ResultSetHeader>(`
-        INSERT INTO Review (AlId, Body, Rate)  
-        VALUES (?, ?, ?)
-        `, [AlId, Body, Rate]);
+        INSERT INTO Review (UId, Username, AlId, Body, Rate)  
+        VALUES (?, ?, ?, ?, ?)
+        `, [UId, Username, AlId, Body, Rate]);
         const Id = result.insertId;
         return getReviews(Id);
 }
@@ -111,12 +157,29 @@ export async function createSavedAlbum(UId, AlId) {
         return result[0];
 }
 
+export async function followUser(Follower_Id, Followee_Id) {
+    const [result] = await pool.query<ResultSetHeader>(`
+        INSERT INTO FOLLOW (Follower_Id, Followee_Id)
+        VALUES (?, ?)
+        `, [Follower_Id, Followee_Id]);
+        return result[0];
+}
+
+
 export async function findSavedAlbums(UId) {
     const [ result ] = await pool.query<ResultSetHeader>(`
         SELECT * FROM ALBUM 
         WHERE AlId = any (SELECT AlID FROM SAVED_ALBUM WHERE UId = ?)
         `, [UId]);
          return result
+}
+
+export async function findFollowing(UId) {
+    const [ result ] = await pool.query<ResultSetHeader>(`
+        SELECT * FROM USER 
+        WHERE UId = any (SELECT Followee_Id FROM FOLLOW WHERE Follower_Id = ?)
+        `, [UId]);
+        return result;
 }
 
 export async function getUser(UId) {
@@ -142,16 +205,3 @@ export async function authenticateUser(Username) {
             `, [Username]);
             return rows[0];
 }
-
-
-/*
-export async function createNote(title, contents) {
-    const [result] = await pool.query<ResultSetHeader>(`
-        INSERT INTO notes (title, contents)
-        VALUES (?, ?)
-        `, [title, contents])
-        const id = result.insertId
-        return getNote(id)
-}
-        */
-
