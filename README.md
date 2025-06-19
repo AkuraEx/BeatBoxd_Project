@@ -1,6 +1,6 @@
 ![BeatBoxd_Icon](http://github.com/AkuraEx/BeatBoxdApp/blob/main/public/BeatBoxd.png?raw=true)
 ### The music review app striving to give a letterboxd look and feel to the music review experience
-### BeatBoxd Beta v0.8
+### BeatBoxd Beta v1.1
 https://github.com/AkuraEx/BeatBoxd_Project
 
 
